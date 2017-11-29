@@ -1,118 +1,119 @@
 package cache_test
 
 import (
-    "fmt"
+	"time"
 
-    cache "."
+	cache "."
 
-    "github.com/andrew-bodine/informer/analytics/queue"
-    . "github.com/onsi/ginkgo"
-    . "github.com/onsi/gomega"
+	"github.com/andrew-bodine/informer/analytics/queue"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("cache", func() {
-    var c cache.Cacher
-    var dir *cache.Directive
+	var c cache.Cacher
+	var dir *cache.Directive
 
-    Describe("Cacher", func() {
-        Context("Register", func() {
-            Context("without a unique key", func() {
-                var ready chan bool
+	Describe("Cacher", func() {
+		Context("Register", func() {
+			Context("without a unique key", func() {
+				BeforeEach(func() {
+					c = cache.NewCache()
 
-                BeforeEach(func() {
-                    c = cache.NewCache()
+					dir = &cache.Directive{
+						Key:    "cacher:register:tests",
+						Queuer: queue.NewQueue(1),
+						Source: make(chan interface{}),
+					}
 
-                    dir = &cache.Directive{
-                        Key:        "cacher:register:tests",
-                        Queuer:     queue.NewQueue(1),
-                        Source:     make(chan interface{}),
-                        Closer:     make(chan bool),
-                    }
+					c.Register(dir)
+				})
 
-                    ready = make(chan bool)
+				It("should do nothing", func() {
+					c.Register(dir)
 
-                    go func() {
-                        c.Register(dir)
-                        ready <- true
-                    }()
-                })
+					Expect(len(c.Keys())).To(Equal(1))
+					dir.Stop()
+				})
+			})
 
-                It("should do nothing", func() {
-                    <- ready
-                    close(ready)
+			Context("with a unique key", func() {
+				BeforeEach(func() {
+					c = cache.NewCache()
 
-                    fmt.Println(c.Keys())
-                    Expect(len(c.Keys())).To(Equal(1))
+					dir = &cache.Directive{
+						Key:    "cacher:register:tests",
+						Queuer: queue.NewQueue(2),
+						Source: make(chan interface{}),
+					}
 
-                    exited := make(chan bool)
+					c.Register(dir)
+				})
 
-                    go func() {
-                        c.Register(dir)
-                        exited <- true
-                    }()
+				Context("when directive is stopped", func() {
+					It("stops pumping data and exits", func() {
+						dir.Stop()
+					})
+				})
 
-                    <- exited
+				Context("when there isn't any data avaiable from source", func() {
+					It("doesn't forward anything to the queuer", func() {
+						Expect(dir.Queuer.Count()).To(Equal(0))
+						dir.Stop()
+					})
+				})
 
-                    fmt.Println(c.Keys())
-                    Expect(len(c.Keys())).To(Equal(1))
+				Context("when there is data available from source channel", func() {
+					BeforeEach(func() {
+						dir.Source <- 0
+					})
 
-                    close(exited)
-                })
-            })
+					It("forwards the data to the queuer", func() {
+						Expect(dir.Queuer.Count()).To(Equal(1))
+						dir.Stop()
+					})
+				})
+			})
+		})
 
-            Context("with a unique key", func() {
-                var exited chan bool
+		Context("Unregister", func() {
+			Context("with a registered directive", func() {
+				BeforeEach(func() {
+					c = cache.NewCache()
 
-                BeforeEach(func() {
-                    c = cache.NewCache()
+					dir = &cache.Directive{
+						Key:    "cacher:register:tests",
+						Queuer: queue.NewQueue(1),
+						Source: make(chan interface{}),
+					}
 
-                    dir = &cache.Directive{
-                        Key:        "cacher:register:tests",
-                        Queuer:     queue.NewQueue(2),
-                        Source:     make(chan interface{}),
-                        Closer:     make(chan bool),
-                    }
+					c.Register(dir)
+				})
 
-                    exited = make(chan bool)
+				It("closes the directive, and cleans up", func() {
+					Expect(dir.Queuer.Count()).To(Equal(0))
+					c.Unregister(dir)
 
-                    go func() {
-                        c.Register(dir)
+					timeout := make(chan bool)
 
-                        exited <- true
-                    }()
-                })
+					// Try to write to the source channel, this should block
+					// if the directive was actually unregistered as there is
+					// no receiver.
+					go func() {
+						select {
+						case dir.Source <- 0:
+							timeout <- false
+						case <-time.After(time.Millisecond):
+							timeout <- true
+						}
+					}()
 
-                Context("when stopper channel closes", func() {
-                    It("stops pumping data and exits", func() {
-                        close(dir.Closer)
-                        value := <- exited
-                        Expect(value).To(Equal(true))
-                        close(exited)
-                    })
-                })
-
-                Context("when there isn't any data avaiable from source", func() {
-                    It("doesn't forward anything to the queuer", func() {
-                        Expect(dir.Queuer.Count()).To(Equal(0))
-                        close(dir.Closer)
-                        <- exited
-                        close(exited)
-                    })
-                })
-
-                Context("when there is data available from source channel", func() {
-                    BeforeEach(func() {
-                        dir.Source <- 0
-                    })
-
-                    It("forwards the data to the queuer", func() {
-                        Expect(dir.Queuer.Count()).To(Equal(1))
-                        close(dir.Closer)
-                        <- exited
-                        close(exited)
-                    })
-                })
-            })
-        })
-    })
+					value := <-timeout
+					Expect(value).To(Equal(true))
+				})
+			})
+			Context("with an unknown directive", func() {})
+			Context("with a registered directive closer, closed", func() {})
+		})
+	})
 })
