@@ -11,7 +11,7 @@ var _ = Describe("queue", func() {
     var q queue.Queuer
 
     Context("NewQueue", func() {
-        It("creates a Queue size 1 and sets inital count to 0", func() {
+        It("creates a queue size 1 and sets inital count to 0", func() {
             q = queue.NewQueue(1)
             Expect(q.Size()).To(Equal(1))
             Expect(q.Count()).To(Equal(0))
@@ -20,44 +20,68 @@ var _ = Describe("queue", func() {
 
     Context("Queue", func() {
         Context("Push", func() {
-            Context("when Queue is empty", func() {
+            Context("when queue is empty", func() {
                 BeforeEach(func() {
                     q = queue.NewQueue(1)
                 })
 
-                It("appends to the Queue", func() {
-                    removed := q.Push(0)
-                    Expect(removed).To(BeNil())
+                It("appends to the queue", func() {
+                    q.Push(0)
                     Expect(q.Size()).To(Equal(1))
                     Expect(q.Count()).To(Equal(1))
                 })
             })
 
-            Context("when Queue is not empty, and not full", func() {
+            Context("when queue is not empty, and not full", func() {
                 BeforeEach(func() {
                     q = queue.NewQueue(2)
-                    _ = q.Push(0)
+                    q.Push(0)
                 })
 
-                It("appends to the Queue", func() {
-                    removed := q.Push(0)
-                    Expect(removed).To(BeNil())
+                It("appends to the queue", func() {
+                    q.Push(0)
                     Expect(q.Size()).To(Equal(2))
                     Expect(q.Count()).To(Equal(2))
                 })
             })
 
-            Context("when Queue is full", func() {
+            Context("when queue is full", func() {
                 BeforeEach(func() {
                     q = queue.NewQueue(1)
-                    _ = q.Push(0)
+                    q.Push(0)
                 })
 
-                It("appends to the Queue, and returns oldest item", func() {
-                    removed := q.Push(0)
-                    Expect(removed).ToNot(BeNil())
+                It("appends to the queue", func() {
+                    q.Push(0)
                     Expect(q.Size()).To(Equal(1))
                     Expect(q.Count()).To(Equal(1))
+                })
+            })
+        })
+
+        Context("Drain", func() {
+            Context("when queue is empty", func() {
+                BeforeEach(func() {
+                    q = queue.NewQueue(1)
+                })
+
+                It("doesn't change anything", func() {
+                    q.Drain()
+                    Expect(q.Size()).To(Equal(1))
+                    Expect(q.Count()).To(Equal(0))
+                })
+            })
+
+            Context("when queue is not empty", func() {
+                BeforeEach(func() {
+                    q = queue.NewQueue(1)
+                    q.Push(0)
+                })
+
+                It("empties the queue", func() {
+                    q.Drain()
+                    Expect(q.Size()).To(Equal(1))
+                    Expect(q.Count()).To(Equal(0))
                 })
             })
         })
@@ -78,7 +102,7 @@ var _ = Describe("queue", func() {
             Context("when Queue is not empty, and not full", func() {
                 BeforeEach(func() {
                     q = queue.NewQueue(2)
-                    _ = q.Push(0)
+                    q.Push(0)
                 })
 
                 It("should return an accurate json string", func() {
@@ -91,7 +115,7 @@ var _ = Describe("queue", func() {
             Context("when Queue is full", func() {
                 BeforeEach(func() {
                     q = queue.NewQueue(1)
-                    _ = q.Push(0)
+                    q.Push(0)
                 })
 
                 It("should return an accurate json string", func() {

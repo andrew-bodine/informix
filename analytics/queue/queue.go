@@ -4,6 +4,7 @@ import (
     "sync"
 )
 
+// Returns the default Queuer implementation internal to this package.
 func NewQueue(size int) Queuer {
     return &queue{
         size:   size,
@@ -14,6 +15,8 @@ func NewQueue(size int) Queuer {
     }
 }
 
+// The internal queue implementation relys on a linked list of
+// these item objects.
 type item struct {
     data   interface{}
     next    *item
@@ -21,25 +24,30 @@ type item struct {
 
 // An implementation of the Queuer interface, backed by memory.
 type queue struct {
-    size    int
-    count   int
+    size        int
+    count       int
 
-    head    *item
-    tail    *item
+    head        *item
+    tail        *item
 
     sync.Mutex
 }
 
+// Implement the Queuer interface.
 func (q *queue) Size() int {
     return q.size
 }
 
+// Implement the Queuer interface.
 func (q *queue) Count() int {
+    q.Lock()
+    defer q.Unlock()
+
     return q.count
 }
 
-// Push appends the item to the end of the queue.
-func (q *queue) Push(data interface{}) interface{} {
+// Implement the Queuer interface.
+func (q *queue) Push(data interface{}) {
     q.Lock()
     defer q.Unlock()
 
@@ -53,17 +61,27 @@ func (q *queue) Push(data interface{}) interface{} {
         q.tail = i
         q.head = q.tail
         q.count++
-        return nil
+        break
     case q.size:
-        removed := q.head
         q.tail.next = i
         q.tail = q.tail.next
         q.head = q.head.next
-        return removed.data
+        break
     default:
         q.tail.next = i
         q.tail = q.tail.next
         q.count++
-        return nil
+        break
     }
+}
+
+// Implement the Queuer interface.
+func (q *queue) Drain() {
+    q.Lock()
+    defer q.Unlock()
+
+    q.head = nil
+    q.tail = nil
+
+    q.count = 0
 }
