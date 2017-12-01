@@ -1,6 +1,7 @@
 package upstream_test
 
 import (
+    "net"
     "os"
 
 	upstream "."
@@ -39,19 +40,36 @@ var _ = Describe("upstream", func() {
             Context("Open()", func() {
                 Context("when Socket is already closed", func() {
                     It("changes state to open", func() {
-                        err := soc.Open()
+                        err := soc.Open(nil)
                         Expect(err).To(BeNil())
 
                         Expect(soc.State()).To(Equal(upstream.OPEN))
                     })
 
                     It("opens the underlying interface", func() {
-                        _ = soc.Open()
+                        _ = soc.Open(nil)
 
                         // If the socket was actually opened, we expect
                         // the corresponding file to exist.
                         _, err := os.Stat(upstream.SOCK)
                         Expect(err).To(BeNil())
+                    })
+
+                    It("streams data to the provided channel", func() {
+                        downstream := make(chan interface{})
+                        defer close(downstream)
+
+                        _ = soc.Open(downstream)
+
+                        sent := []byte("testing")
+                        con, err := net.Dial("unix", upstream.SOCK)
+                        Expect(err).To(BeNil())
+                        defer con.Close()
+                        _, err = con.Write(sent)
+                        Expect(err).To(BeNil())
+
+                        received := <- downstream
+                        Expect(received).To(Equal(sent))
                     })
 
                     Context("an error occurs", func() {
@@ -61,12 +79,12 @@ var _ = Describe("upstream", func() {
                         })
 
                         It("returns the error", func() {
-                            err := soc.Open()
+                            err := soc.Open(nil)
                             Expect(err).ToNot(BeNil())
                         })
 
                         It("doesn't change state", func() {
-                            _ = soc.Open()
+                            _ = soc.Open(nil)
                             Expect(soc.State()).To(Equal(upstream.CLOSED))
                         })
                     })
@@ -74,14 +92,14 @@ var _ = Describe("upstream", func() {
 
                 Context("when Socket is already open", func() {
                     BeforeEach(func() {
-                        _ = soc.Open()
+                        _ = soc.Open(nil)
                     })
 
                     It("doesn't do anything", func() {
                         before, err := os.Stat(upstream.SOCK)
                         Expect(err).To(BeNil())
 
-                        err = soc.Open()
+                        err = soc.Open(nil)
                         Expect(err).To(BeNil())
                         Expect(soc.State()).To(Equal(upstream.OPEN))
 
@@ -95,7 +113,7 @@ var _ = Describe("upstream", func() {
             Context("Close()", func() {
                 Context("when Socket is already open", func() {
                     BeforeEach(func() {
-                        _ = soc.Open()
+                        _ = soc.Open(nil)
                     })
 
                     It("changes state to closed", func() {
@@ -112,6 +130,24 @@ var _ = Describe("upstream", func() {
                         // the corresponding file to not exist.
                         _, err := os.Stat(upstream.SOCK)
                         Expect(err).ToNot(BeNil())
+                    })
+
+                    It("stops streaming data downstream", func() {
+                        _ = soc.Close()
+                        soc = upstream.NewSocket()
+
+                        downstream := make(chan interface{})
+                        defer close(downstream)
+                        _ = soc.Open(downstream)
+
+                        con, _ := net.Dial("unix", upstream.SOCK)
+                        defer con.Close()
+
+                        // Should close the underlying interface, so we expect
+                        // an error on the next write.
+                        _ = soc.Close()
+
+                        _, _ = con.Write([]byte("testing"))
                     })
 
                     // TODO: Re-enable this test, once you discover what kinds
@@ -145,5 +181,64 @@ var _ = Describe("upstream", func() {
                 })
             })
         })
+
+        Context("Benchmark", func() {
+            Context("more than one socket connection", func() {
+                var num = 1
+                var conns []net.Conn
+                var downstream chan interface{}
+
+                BeforeEach(func() {
+                    soc = upstream.NewSocket()
+
+                    downstream = make(chan interface{})
+                    _ = soc.Open(downstream)
+
+                    for i := 1; i <= num; i++ {
+                        c, err := net.Dial("unix", upstream.SOCK)
+                        Expect(err).To(BeNil())
+
+                        conns = append(conns, c)
+                    }
+                })
+
+                AfterEach(func() {
+                    _ = soc.Close()
+
+                    close(downstream)
+
+                    for _, c := range conns {
+                        c.Close()
+                    }
+                })
+
+                Context("all open at the same time, then close at the same time", func() {
+                    It("processes all the data", func() {
+                        done := make(chan bool)
+                        defer close(done)
+
+                        // Pump the channel, in runtime there will be another
+                        // goroutine doing this. We want to avoid block sends
+                        // and receives here for the test and the stream()
+                        // routine.
+                        go func() {
+                            for i := 1; i <= num; i++ {
+                                <- downstream
+                            }
+
+                            done <- true
+                        }()
+
+                        sent := []byte("testing")
+                        for _, c := range conns {
+                            _, _ = c.Write(sent)
+                        }
+
+                        <- done
+                    })
+                })
+            })
+        })
+
     })
 })

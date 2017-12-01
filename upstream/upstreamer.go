@@ -10,8 +10,8 @@ type Upstreamer interface {
     State() int
 
     // Open allows callers to instruct an Upstreamer to open it's underlying
-    // upstream interface.
-    Open() error
+    // upstream interface, and to stream data to the provided channel.
+    Open(chan interface{}) error
 
     // Close allows callers to tell an Upstreamer to close it's underlying
     // upstream interface.
