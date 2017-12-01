@@ -2,6 +2,10 @@
 // level inbound data interfaces.
 package upstream
 
+import (
+    "io"
+)
+
 // An Upstreamer manages an upstream interface.
 type Upstreamer interface {
 
@@ -11,8 +15,8 @@ type Upstreamer interface {
 
     // Open allows callers to instruct an Upstreamer to open it's underlying
     // upstream interface at the provided address, and stream data to the
-    // provided channel.
-    Open(string, chan interface{}) error
+    // provided handler.
+    Open(string, io.Writer) error
 
     // Close allows callers to tell an Upstreamer to close it's underlying
     // upstream interface.

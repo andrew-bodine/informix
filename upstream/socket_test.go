@@ -63,7 +63,11 @@ var _ = Describe("upstream", func() {
                         downstream := make(chan interface{})
                         defer close(downstream)
 
-                        _ = soc.Open(SOCK, downstream)
+                        writer := &chanWriter{
+                            downstream: downstream,
+                        }
+
+                        _ = soc.Open(SOCK, writer)
 
                         sent := []byte("testing")
                         con, err := net.Dial("unix", SOCK)
@@ -142,7 +146,12 @@ var _ = Describe("upstream", func() {
 
                         downstream := make(chan interface{})
                         defer close(downstream)
-                        _ = soc.Open(SOCK, downstream)
+
+                        writer := &chanWriter{
+                            downstream: downstream,
+                        }
+
+                        _ = soc.Open(SOCK, writer)
 
                         con, _ := net.Dial("unix", SOCK)
                         defer con.Close()
@@ -196,7 +205,12 @@ var _ = Describe("upstream", func() {
                     soc = upstream.NewSocket()
 
                     downstream = make(chan interface{})
-                    _ = soc.Open(SOCK, downstream)
+
+                    writer := &chanWriter{
+                        downstream:   downstream,
+                    }
+
+                    _ = soc.Open(SOCK, writer)
 
                     for i := 1; i <= num; i++ {
                         c, err := net.Dial("unix", SOCK)

@@ -6,17 +6,6 @@ import (
     "sync"
 )
 
-type writerChan struct {
-    downstream  chan interface{}
-}
-
-// Implement the io.Writer interface.
-func (w *writerChan) Write(b []byte) (int, error) {
-    w.downstream <- b
-
-    return len(b), nil
-}
-
 func NewSocket() Upstreamer {
     return &Socket{
         state:  CLOSED,
@@ -30,7 +19,7 @@ type Socket struct {
 
     listener    net.Listener
 
-    downstream  *writerChan
+    downstream  io.Writer
     conns       []net.Conn
 
     sync.Mutex
@@ -45,7 +34,7 @@ func (s *Socket) State() int {
 }
 
 // Implement the Upstreamer interface.
-func (s *Socket) Open(address string, downstream chan interface{}) error {
+func (s *Socket) Open(address string, downstream io.Writer) error {
     s.Lock()
     defer s.Unlock()
 
@@ -64,12 +53,7 @@ func (s *Socket) Open(address string, downstream chan interface{}) error {
     s.state = OPEN
 
     if downstream != nil {
-
-        // Wrap the downstream channel with an io.Writer implementation to
-        // make streaming from socket to channel really simple.
-        s.downstream = &writerChan{
-            downstream: downstream,
-        }
+        s.downstream = downstream
 
         go s.stream()
     }
