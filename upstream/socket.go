@@ -45,7 +45,7 @@ func (s *Socket) State() int {
 }
 
 // Implement the Upstreamer interface.
-func (s *Socket) Open(downstream chan interface{}) error {
+func (s *Socket) Open(address string, downstream chan interface{}) error {
     s.Lock()
     defer s.Unlock()
 
@@ -53,8 +53,9 @@ func (s *Socket) Open(downstream chan interface{}) error {
         return nil
     }
 
-    // Open underlying UNIX socket at SOCK path.
-    l, err := net.Listen("unix", SOCK)
+    // Open underlying UNIX socket at address, which in this case should
+    // be a filesytem path.
+    l, err := net.Listen("unix", address)
     if err != nil {
         return err
     }

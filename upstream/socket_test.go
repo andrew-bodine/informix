@@ -10,6 +10,10 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+const (
+    SOCK = "/tmp/informix.sock"
+)
+
 var _ = Describe("upstream", func() {
     var soc upstream.Upstreamer
 
@@ -34,24 +38,24 @@ var _ = Describe("upstream", func() {
             })
 
             AfterEach(func() {
-                _ = os.Remove(upstream.SOCK)
+                _ = os.Remove(SOCK)
             })
 
             Context("Open()", func() {
                 Context("when Socket is already closed", func() {
                     It("changes state to open", func() {
-                        err := soc.Open(nil)
+                        err := soc.Open(SOCK, nil)
                         Expect(err).To(BeNil())
 
                         Expect(soc.State()).To(Equal(upstream.OPEN))
                     })
 
                     It("opens the underlying interface", func() {
-                        _ = soc.Open(nil)
+                        _ = soc.Open(SOCK, nil)
 
                         // If the socket was actually opened, we expect
                         // the corresponding file to exist.
-                        _, err := os.Stat(upstream.SOCK)
+                        _, err := os.Stat(SOCK)
                         Expect(err).To(BeNil())
                     })
 
@@ -59,10 +63,10 @@ var _ = Describe("upstream", func() {
                         downstream := make(chan interface{})
                         defer close(downstream)
 
-                        _ = soc.Open(downstream)
+                        _ = soc.Open(SOCK, downstream)
 
                         sent := []byte("testing")
-                        con, err := net.Dial("unix", upstream.SOCK)
+                        con, err := net.Dial("unix", SOCK)
                         Expect(err).To(BeNil())
                         defer con.Close()
                         _, err = con.Write(sent)
@@ -74,17 +78,17 @@ var _ = Describe("upstream", func() {
 
                     Context("an error occurs", func() {
                         BeforeEach(func() {
-                            f, _ := os.Create(upstream.SOCK)
+                            f, _ := os.Create(SOCK)
                             defer f.Close()
                         })
 
                         It("returns the error", func() {
-                            err := soc.Open(nil)
+                            err := soc.Open(SOCK, nil)
                             Expect(err).ToNot(BeNil())
                         })
 
                         It("doesn't change state", func() {
-                            _ = soc.Open(nil)
+                            _ = soc.Open(SOCK, nil)
                             Expect(soc.State()).To(Equal(upstream.CLOSED))
                         })
                     })
@@ -92,18 +96,18 @@ var _ = Describe("upstream", func() {
 
                 Context("when Socket is already open", func() {
                     BeforeEach(func() {
-                        _ = soc.Open(nil)
+                        _ = soc.Open(SOCK, nil)
                     })
 
                     It("doesn't do anything", func() {
-                        before, err := os.Stat(upstream.SOCK)
+                        before, err := os.Stat(SOCK)
                         Expect(err).To(BeNil())
 
-                        err = soc.Open(nil)
+                        err = soc.Open(SOCK, nil)
                         Expect(err).To(BeNil())
                         Expect(soc.State()).To(Equal(upstream.OPEN))
 
-                        after, err := os.Stat(upstream.SOCK)
+                        after, err := os.Stat(SOCK)
                         Expect(err).To(BeNil())
                         Expect(before).To(Equal(after))
                     })
@@ -113,7 +117,7 @@ var _ = Describe("upstream", func() {
             Context("Close()", func() {
                 Context("when Socket is already open", func() {
                     BeforeEach(func() {
-                        _ = soc.Open(nil)
+                        _ = soc.Open(SOCK, nil)
                     })
 
                     It("changes state to closed", func() {
@@ -128,7 +132,7 @@ var _ = Describe("upstream", func() {
 
                         // If the socket was actually closed, we expect
                         // the corresponding file to not exist.
-                        _, err := os.Stat(upstream.SOCK)
+                        _, err := os.Stat(SOCK)
                         Expect(err).ToNot(BeNil())
                     })
 
@@ -138,9 +142,9 @@ var _ = Describe("upstream", func() {
 
                         downstream := make(chan interface{})
                         defer close(downstream)
-                        _ = soc.Open(downstream)
+                        _ = soc.Open(SOCK, downstream)
 
-                        con, _ := net.Dial("unix", upstream.SOCK)
+                        con, _ := net.Dial("unix", SOCK)
                         defer con.Close()
 
                         // Should close the underlying interface, so we expect
@@ -169,13 +173,13 @@ var _ = Describe("upstream", func() {
 
                 Context("when Socket is already closed", func() {
                     It("doesn't do anything", func() {
-                        f, _ := os.Create(upstream.SOCK)
+                        f, _ := os.Create(SOCK)
                         defer f.Close()
 
                         err := soc.Close()
                         Expect(err).To(BeNil())
 
-                        _, err = os.Stat(upstream.SOCK)
+                        _, err = os.Stat(SOCK)
                         Expect(err).To(BeNil())
                     })
                 })
@@ -192,10 +196,10 @@ var _ = Describe("upstream", func() {
                     soc = upstream.NewSocket()
 
                     downstream = make(chan interface{})
-                    _ = soc.Open(downstream)
+                    _ = soc.Open(SOCK, downstream)
 
                     for i := 1; i <= num; i++ {
-                        c, err := net.Dial("unix", upstream.SOCK)
+                        c, err := net.Dial("unix", SOCK)
                         Expect(err).To(BeNil())
 
                         conns = append(conns, c)
