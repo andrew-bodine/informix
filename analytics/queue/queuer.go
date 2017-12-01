@@ -2,6 +2,7 @@ package queue
 
 import (
 	"encoding/json"
+	"io"
 )
 
 // A Queuer is responsible for maintaining a store of any type of objects
@@ -17,11 +18,16 @@ type Queuer interface {
 	// bigger than Size.
 	Count() int
 
+	// Copy returns a snapshot of current items in the queue.
+	Copy() []interface{}
+
 	// Push appends an item to the end of the queue.
 	Push(interface{})
 
 	// Drain clears all items from the queue.
 	Drain()
+
+	io.Writer
 
 	json.Marshaler
 }

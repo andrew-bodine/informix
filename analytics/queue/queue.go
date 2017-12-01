@@ -47,6 +47,22 @@ func (q *queue) Count() int {
 }
 
 // Implement the Queuer interface.
+func (q *queue) Copy() []interface{} {
+	q.Lock()
+	defer q.Unlock()
+
+	copy := make([]interface{}, q.count)
+	ptr := q.head
+
+	for i := 0; i < q.count; i++ {
+		copy[i] = ptr.data
+		ptr = ptr.next
+	}
+
+	return copy
+}
+
+// Implement the Queuer interface.
 func (q *queue) Push(data interface{}) {
 	q.Lock()
 	defer q.Unlock()
