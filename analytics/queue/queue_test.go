@@ -1,10 +1,10 @@
 package queue_test
 
 import (
-	queue "."
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/andrew-bodine/informix/analytics/queue"
 )
 
 var _ = Describe("queue", func() {
@@ -128,7 +128,7 @@ var _ = Describe("queue", func() {
 
 					delegate = make(chan interface{})
 
-					handler = &TestPushHandler{
+					handler = &testPushHandler{
 						delegate:	delegate,
 					}
 				})

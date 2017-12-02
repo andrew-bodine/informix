@@ -1,7 +1,5 @@
 package upstream_test
 
-import ()
-
 type chanWriter struct {
     downstream  chan interface{}
 }
