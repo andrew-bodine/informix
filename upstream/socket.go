@@ -64,15 +64,17 @@ func (s *Socket) Open(address string, downstream io.Writer) error {
 // stream listens for incoming data on the underlying interface, and
 // forwards any data downstream.
 func (s *Socket) stream() {
+    defer s.closeConns()
+
     for {
+        s.Lock()
+        if s.listener == nil {
+            return
+        }
+        s.Unlock()
+
         conn, err := s.listener.Accept()
         if err != nil || s.State() == CLOSED {
-
-            // Stop all io.Copy blocking operations currently ongoing.
-            for _, c := range s.conns {
-                c.Close()
-            }
-
             return
         }
 
@@ -86,15 +88,23 @@ func (s *Socket) stream() {
     }
 }
 
+// Stop all io.Copy blocking operations currently ongoing.
+func (s *Socket) closeConns() {
+    for _, c := range s.conns {
+        c.Close()
+    }
+}
+
 // Implement the Upstreamer interface.
 func (s *Socket) Close() error {
     s.Lock()
+    defer s.Unlock()
+
     if s.state == CLOSED {
         return nil
     }
 
     s.state = CLOSED
-    s.Unlock()
 
     if err := s.listener.Close(); err != nil {
         return err
