@@ -1,4 +1,6 @@
 # Informix
+![TravisCI Status](https://travis-ci.org/andrew-bodine/informix.svg?branch=master)
+
 Informix an environmental information and control hub.
 
 By aggregating and analyzing comprehensive data about it's physical host
