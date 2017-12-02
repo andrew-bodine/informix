@@ -118,46 +118,6 @@ var _ = Describe("queue", func() {
 					})
 				})
 			})
-
-			Context("MarshalJSON()", func() {
-				Context("when Queue is empty", func() {
-					BeforeEach(func() {
-						q = queue.NewQueue(1)
-					})
-
-					It("should return an accurate json string", func() {
-						serialized, err := q.MarshalJSON()
-						Expect(err).To(BeNil())
-						Expect(string(serialized)).To(Equal("\"[]\""))
-					})
-				})
-
-				Context("when Queue is not empty, and not full", func() {
-					BeforeEach(func() {
-						q = queue.NewQueue(2)
-						q.Push(0)
-					})
-
-					It("should return an accurate json string", func() {
-						serialized, err := q.MarshalJSON()
-						Expect(err).To(BeNil())
-						Expect(string(serialized)).To(Equal("\"[0]\""))
-					})
-				})
-
-				Context("when Queue is full", func() {
-					BeforeEach(func() {
-						q = queue.NewQueue(1)
-						q.Push(0)
-					})
-
-					It("should return an accurate json string", func() {
-						serialized, err := q.MarshalJSON()
-						Expect(err).To(BeNil())
-						Expect(string(serialized)).To(Equal("\"[0]\""))
-					})
-				})
-			})
 		})
 	})
 })

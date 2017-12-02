@@ -1,7 +1,6 @@
 package queue
 
 import (
-	"encoding/json"
 	"io"
 )
 
@@ -12,10 +11,7 @@ type Queuer interface {
 	// Size reports the current capacity of the queue.
 	Size() int
 
-	// TODO: Resize(int)
-
-	// Count reports the number of items in the queue, this is never
-	// bigger than Size.
+	// Count reports the number of items in the queue.
 	Count() int
 
 	// Copy returns a snapshot of current items in the queue.
@@ -27,7 +23,7 @@ type Queuer interface {
 	// Drain clears all items from the queue.
 	Drain()
 
-	io.Writer
+	// TODO: Resize(int)
 
-	json.Marshaler
+	io.Writer
 }
