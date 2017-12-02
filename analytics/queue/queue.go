@@ -24,11 +24,13 @@ type item struct {
 
 // An implementation of the Queuer interface, backed by memory.
 type queue struct {
-	size  int
-	count int
+	size		int
+	count		int
 
-	head *item
-	tail *item
+	head		*item
+	tail		*item
+
+	pushHandler	PushHandler
 
 	sync.Mutex
 }
@@ -89,6 +91,11 @@ func (q *queue) Push(data interface{}) {
 		q.count++
 		break
 	}
+
+
+	if q.pushHandler != nil {
+		go q.pushHandler.AfterPush(data)
+	}
 }
 
 // Implement the Queuer interface.
@@ -100,4 +107,12 @@ func (q *queue) Drain() {
 	q.tail = nil
 
 	q.count = 0
+}
+
+// Implement the Queuer interface.
+func (q *queue) OnPush(handler PushHandler) {
+	q.Lock()
+	defer q.Unlock()
+
+	q.pushHandler = handler
 }

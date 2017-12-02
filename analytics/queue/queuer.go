@@ -23,7 +23,9 @@ type Queuer interface {
 	// Drain clears all items from the queue.
 	Drain()
 
-	// TODO: Resize(int)
+	// OnPush sets the provided push handler to trigger when an item is
+	// pushed into the queue.
+	OnPush(PushHandler)
 
 	io.Writer
 }

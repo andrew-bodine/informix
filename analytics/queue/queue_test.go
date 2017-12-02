@@ -118,6 +118,32 @@ var _ = Describe("queue", func() {
 					})
 				})
 			})
+
+			Context("OnPush()", func() {
+				var handler queue.PushHandler
+				var delegate chan interface{}
+
+				BeforeEach(func() {
+					q = queue.NewQueue(5)
+
+					delegate = make(chan interface{})
+
+					handler = &TestPushHandler{
+						delegate:	delegate,
+					}
+				})
+
+				AfterEach(func() {
+					close(delegate)
+				})
+
+				It("sets the handler as a hook for pushed data", func() {
+					q.OnPush(handler)
+					q.Push(0)
+					<- delegate
+					Expect(q.Count()).To(Equal(1))
+				})
+			})
 		})
 	})
 })
