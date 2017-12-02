@@ -4,8 +4,9 @@ branches:
 
 language: go
 
-# before_install:
-#   -
+before_install:
+  - go get github.com/onsi/ginkgo/ginkgo
+  - go get github.com/onsi/gomega
 
 # For now, when TravisCI runs we want it to run all available tests via ginkgo.
 script:
