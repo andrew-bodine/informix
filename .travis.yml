@@ -10,7 +10,7 @@ before_install:
 
 # For now, when TravisCI runs we want it to run all available tests via ginkgo.
 script:
-  - ginkgo -r --race
+  - ginkgo -r --race --cover
 
 # after_success:
 #   -
