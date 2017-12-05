@@ -59,7 +59,7 @@ var _ = Describe("upstream", func() {
                         Expect(err).To(BeNil())
                     })
 
-                    It("streams data to the provided channel", func() {
+                    It("streams data to the provided writer", func() {
                         downstream := make(chan interface{})
                         defer close(downstream)
 

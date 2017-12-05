@@ -15,7 +15,7 @@ type Upstreamer interface {
 
     // Open allows callers to instruct an Upstreamer to open it's underlying
     // upstream interface at the provided address, and stream data to the
-    // provided handler.
+    // provided writer.
     Open(string, io.Writer) error
 
     // Close allows callers to tell an Upstreamer to close it's underlying

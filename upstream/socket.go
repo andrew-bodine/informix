@@ -17,10 +17,10 @@ func NewSocket() Upstreamer {
 type Socket struct {
     state       int
 
+    // Upstream listener and connection store.
     listener    net.Listener
 
     downstream  io.Writer
-    conns       []net.Conn
 
     sync.Mutex
 }
@@ -64,8 +64,6 @@ func (s *Socket) Open(address string, downstream io.Writer) error {
 // stream listens for incoming data on the underlying interface, and
 // forwards any data downstream.
 func (s *Socket) stream() {
-    defer s.closeConns()
-
     for {
         s.Lock()
         if s.listener == nil {
@@ -74,42 +72,38 @@ func (s *Socket) stream() {
         s.Unlock()
 
         conn, err := s.listener.Accept()
+
+        // If there was an error while listening to the socket, or if at the
+        // time of a new connection the synchronized state is closed, then
+        // exit immediately.
         if err != nil || s.State() == CLOSED {
             return
         }
 
         go func(c net.Conn) {
-            s.Lock()
-            s.conns = append(s.conns, c)
-            s.Unlock()
+            defer c.Close()
 
             _, _ = io.Copy(s.downstream, c)
         }(conn)
     }
 }
 
-// Stop all io.Copy blocking operations currently ongoing.
-func (s *Socket) closeConns() {
-    for _, c := range s.conns {
-        c.Close()
-    }
-}
-
 // Implement the Upstreamer interface.
 func (s *Socket) Close() error {
-    s.Lock()
-    defer s.Unlock()
-
-    if s.state == CLOSED {
+    if s.State() == CLOSED {
         return nil
     }
 
+    s.Lock()
     s.state = CLOSED
+    s.Unlock()
 
     if err := s.listener.Close(); err != nil {
         return err
     }
+    s.Lock()
     s.listener = nil
+    s.Unlock()
 
     return nil
 }
