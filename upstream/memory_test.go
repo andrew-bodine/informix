@@ -140,7 +140,54 @@ var _ = Describe("upstream", func() {
                 })
             })
         })
-
-        // TODO: Benchmark tests.
     })
+
+	Context("Benchmarking", func() {
+		Context("more than one memory connection", func() {
+			var num = 10
+			var downstream chan interface{}
+
+			BeforeEach(func() {
+				downstream = make(chan interface{})
+				writer := &chanWriter{
+					downstream:   downstream,
+				}
+
+				_ = mem.Open("", writer)
+			})
+
+			AfterEach(func() {
+				close(downstream)
+			})
+
+			Context("all open at the same time, then close at the same time", func() {
+				It("processes all the data", func() {
+					done := make(chan bool)
+					defer close(done)
+
+					// Pump the channel, in runtime there will be another
+					// goroutine doing this. We want to avoid block sends
+					// and receives here for the test and the stream()
+					// routine.
+					go func() {
+						for i := 1; i <= num; i++ {
+							<- downstream
+						}
+
+						done <- true
+					}()
+
+					m := mem.(*upstream.Memory)
+					up := m.Upstream()
+
+					sent := []byte("testing")
+					for i := 0; i < num; i++ {
+						up <- sent
+					}
+
+					<- done
+				})
+			})
+		})
+	})
 })
