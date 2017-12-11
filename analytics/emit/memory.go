@@ -6,6 +6,10 @@ import (
     "strings"
 )
 
+const (
+    MEMORY = "memory"
+)
+
 // An Emitter implementation for memory information in linux.
 type memory struct {
 
