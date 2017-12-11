@@ -2,7 +2,12 @@ branches:
   only:
     - master
 
+sudo: required
+
 language: go
+
+services:
+    - docker
 
 before_install:
   - go get github.com/onsi/ginkgo/ginkgo
@@ -11,7 +16,7 @@ before_install:
 # For now, when TravisCI runs we want it to run all available tests via ginkgo.
 # Also, have ginkgo return coverage reports for each package.
 script:
-  - ginkgo -r --race --cover
+  - make build
 
 # after_success:
 #   -
