@@ -3,42 +3,42 @@ package upstream
 import (
     "io"
     "net"
-    "sync"
 )
 
 func NewSocket() Upstreamer {
-    return &Socket{
-        state:  CLOSED,
+    s := &Socket{
+        state:      make(chan int, 1),
+        listener:   make(chan net.Listener, 1),
     }
+
+    s.state <- CLOSED
+    s.listener <- nil
+
+    return s
 }
 
 // An upstream interface for receiving data from peer services on the same
 // system that Informix is running on via a UNIX style socket.
 type Socket struct {
-    state       int
+    state       chan int
 
     // Upstream listener and connection store.
-    listener    net.Listener
+    listener    chan net.Listener
 
     downstream  io.Writer
-
-    sync.Mutex
 }
 
 // Implement the Upstreamer interface.
 func (s *Socket) State() int {
-    s.Lock()
-    defer s.Unlock()
+    st := <- s.state
+    s.state <- st
 
-    return s.state
+    return st
 }
 
 // Implement the Upstreamer interface.
 func (s *Socket) Open(address string, downstream io.Writer) error {
-    s.Lock()
-    defer s.Unlock()
-
-    if s.state == OPEN {
+    if s.State() == OPEN {
         return nil
     }
 
@@ -49,8 +49,11 @@ func (s *Socket) Open(address string, downstream io.Writer) error {
         return err
     }
 
-    s.listener = l
-    s.state = OPEN
+    <- s.state
+    s.state <- OPEN
+
+    <- s.listener
+    s.listener <- l
 
     if downstream != nil {
         s.downstream = downstream
@@ -65,13 +68,14 @@ func (s *Socket) Open(address string, downstream io.Writer) error {
 // forwards any data downstream.
 func (s *Socket) stream() {
     for {
-        s.Lock()
-        if s.listener == nil {
+        l := <- s.listener
+        s.listener <- l
+
+        if l == nil {
             return
         }
-        s.Unlock()
 
-        conn, err := s.listener.Accept()
+        conn, err := l.Accept()
 
         // If there was an error while listening to the socket, or if at the
         // time of a new connection the synchronized state is closed, then
@@ -94,16 +98,15 @@ func (s *Socket) Close() error {
         return nil
     }
 
-    s.Lock()
-    s.state = CLOSED
-    s.Unlock()
+    <- s.state
+    s.state <- CLOSED
 
-    if err := s.listener.Close(); err != nil {
+    l := <- s.listener
+    s.listener <- nil
+
+    if err := l.Close(); err != nil {
         return err
     }
-    s.Lock()
-    s.listener = nil
-    s.Unlock()
 
     return nil
 }
