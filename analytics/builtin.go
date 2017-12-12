@@ -1,6 +1,9 @@
 package analytics
 
 import (
+    "encoding/json"
+    "fmt"
+    "net/http"
     "time"
 
     "github.com/andrew-bodine/informix/analytics/emit"
@@ -9,6 +12,8 @@ import (
 
 type Builtin interface {
     Cache(string) []interface{}
+
+    CacheHandler(http.ResponseWriter, *http.Request)
 
     Run(time.Duration)
 
@@ -51,6 +56,18 @@ func (b *builtin) Cache(key string) []interface{} {
     }
 
     return q.Copy()
+}
+
+func (b *builtin) CacheHandler(w http.ResponseWriter, r *http.Request) {
+    cache := make(map[string]interface{})
+
+    for k, q := range b.queuers {
+        cache[k] = q.Copy()
+    }
+
+    j, _ := json.Marshal(cache)
+
+    fmt.Fprint(w, string(j))
 }
 
 // Implement the Builtin interface.

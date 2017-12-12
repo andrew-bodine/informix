@@ -17,3 +17,5 @@ RUN go build -o /go/bin/informix main.go
 
 # Run unit and integration tests.
 RUN ginkgo -r --race --cover
+
+EXPOSE 80

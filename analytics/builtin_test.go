@@ -1,6 +1,7 @@
 package analytics_test
 
 import (
+    "net/http"
     "time"
 
     . "github.com/onsi/ginkgo"
@@ -53,6 +54,44 @@ var _ = Describe("analytics", func() {
                     // Assert something about the data.
                     d := data[0].(map[string]int)
                     Expect(d["MemAvailable"]).NotTo(Equal(0))
+                })
+            })
+        })
+
+        Context("CacheHandler()", func() {
+            Context("when not running", func() {
+                It("returns empty values for all keys", func() {
+                    r, err := http.NewRequest("GET", "/analytics/builtin", nil)
+                    Expect(err).To(BeNil())
+
+                    w := &MockResponseWriter{}
+                    b.CacheHandler(w, r)
+
+                    Expect(w.Buf).NotTo(Equal(""))
+                })
+            })
+
+            Context("when running", func() {
+                BeforeEach(func () {
+                    b.Run(time.Microsecond)
+                })
+
+                AfterEach(func() {
+                    b.Stop()
+                })
+
+                It("returns values for all keys", func() {
+                    timer := time.NewTimer(time.Millisecond * 10)
+                    <- timer.C
+
+                    r, err := http.NewRequest("GET", "/analytics/builtin", nil)
+                    Expect(err).To(BeNil())
+
+                    w := &MockResponseWriter{}
+                    b.CacheHandler(w, r)
+
+                    Expect(w.Buf).NotTo(Equal(""))
+                    Expect(w.Buf).To(ContainSubstring("MemAvailable"))
                 })
             })
         })

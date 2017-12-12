@@ -31,6 +31,7 @@ pi: build
 run: clean build
 	docker run --name $(CONTAINER_INSTANCE) \
 	 	-d \
+		-P \
 		$(CONTAINER_IMAGE) \
 		/go/bin/$(CONTAINER_IMAGE)
 #		-e WIOT_ORG_ID=${WIOT_ORG_ID} \

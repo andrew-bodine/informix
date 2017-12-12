@@ -2,6 +2,7 @@ package daemon
 
 import (
     "fmt"
+    "net/http"
     "os"
     "os/signal"
     "syscall"
@@ -28,6 +29,9 @@ func Daemon(args []string) {
     // Start builtin analytics and monitoring routine.
     builtin := analytics.NewBuiltin()
     builtin.Run(time.Second * 3)
+
+    http.HandleFunc("/analytics/builtin", builtin.CacheHandler)
+    http.ListenAndServe(":80", nil)
 
     // Wait for a signal.
     <- signals
