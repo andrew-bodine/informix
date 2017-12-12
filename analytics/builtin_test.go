@@ -43,7 +43,7 @@ var _ = Describe("analytics", func() {
                 })
 
                 It("returns the current value for a valid key", func() {
-                    timer := time.NewTimer(time.Millisecond)
+                    timer := time.NewTimer(time.Millisecond * 10)
                     <- timer.C
 
                     data := b.Cache(emit.MEMORY)
@@ -67,7 +67,7 @@ var _ = Describe("analytics", func() {
                 It("starts collecting builtin telemetry", func() {
                     b.Run(time.Microsecond)
 
-                    timer := time.NewTimer(time.Millisecond)
+                    timer := time.NewTimer(time.Millisecond * 10)
                     <- timer.C
 
                     data := b.Cache(emit.MEMORY)
