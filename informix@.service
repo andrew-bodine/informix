@@ -1,0 +1,19 @@
+[Unit]
+Description=Informix
+
+[Service]
+Restart=always
+RestartSec=30
+#EnvironmentFile=/env.sh
+
+# In case host crashed, any cleanup?
+# ExecStartPre=-
+
+ExecStart=/usr/bin/informix
+
+# If you want to be able to `systemctl stop`
+# ExecStop=
+# ExecStopPost=
+
+[Install]
+WantedBy=multi-user.target

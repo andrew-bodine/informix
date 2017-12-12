@@ -28,16 +28,15 @@ pi: build
 # Run a container from the built image, re-creating if necessary. We pull in
 # environment variables for configuring each container, the invoker should set
 # these (i.e. `$ export WIOT_ORG_ID=...`)
-#run: run-local
-
-#run-local: clean build
-#	docker run --name $(CONTAINER_INSTANCE) \
-#	 	-d \
+run: clean build
+	docker run --name $(CONTAINER_INSTANCE) \
+	 	-d \
+		$(CONTAINER_IMAGE) \
+		/go/bin/$(CONTAINER_IMAGE)
 #		-e WIOT_ORG_ID=${WIOT_ORG_ID} \
 #		-e WIOT_AUTH_TOKEN=${WIOT_AUTH_TOKEN} \
 #		-e WIOT_DEVICE_ID=${WIOT_DEVICE_ID} \
 #		-e WIOT_DEVICE_TYPE=${WIOT_DEVICE_TYPE} \
-#		$(CONTAINER_IMAGE)
 
 # Remove the possible container instance.
 clean:

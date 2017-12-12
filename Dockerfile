@@ -12,11 +12,8 @@ WORKDIR /go/src/github.com/andrew-bodine/informix
 
 COPY . .
 
-# Run unit and integration tests.
-RUN ginkgo -r --race --cover --skipPackage daemon
-
 # Build next level testing candidate.
 RUN go build -o /go/bin/informix main.go
 
-# Run daemon tests.
-RUN ginkgo -r --race daemon
+# Run unit and integration tests.
+RUN ginkgo -r --race --cover
