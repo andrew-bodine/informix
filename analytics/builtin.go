@@ -33,7 +33,9 @@ func NewBuiltin() Builtin {
 
     // Setup builtin analytic directives.
     b.generators[emit.MEMORY] = emit.Memory()
-    b.queuers[emit.MEMORY] = queue.NewQueue(1)
+    b.queuers[emit.MEMORY] = queue.NewQueue(3)
+    b.generators[emit.PROCESSOR] = emit.Processor()
+    b.queuers[emit.PROCESSOR] = queue.NewQueue(3)
 
     return b
 }
