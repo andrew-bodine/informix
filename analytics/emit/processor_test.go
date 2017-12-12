@@ -10,24 +10,24 @@ import (
 )
 
 var _ = Describe("emit", func() {
-    Context("Memory()", func() {
-        It("creates a memory generator", func() {
-            mem := emit.Memory()
-            Expect(mem).NotTo(BeNil())
+    Context("Processor()", func() {
+        It("creates a processor generator", func() {
+            proc := emit.Processor()
+            Expect(proc).NotTo(BeNil())
         })
     })
 
-    Context("memory", func() {
+    Context("processor", func() {
 
         // Test the Generator implementation.
         Context("Generator", func() {
             Context("Generate()", func() {
-                It("should return the current memory stats", func() {
-                    mem := emit.Memory()
-                    data := mem.Generate()
+                It("should return the current processor stats", func() {
+                    proc := emit.Processor()
+                    data := proc.Generate()
                     Expect(data).NotTo(BeNil())
-                    info := data.(*linuxproc.MemInfo)
-                    Expect(info.MemAvailable).NotTo(Equal(0))
+                    info := data.(*linuxproc.Stat)
+                    Expect(info.CPUStatAll.User).NotTo(Equal(0))
                 })
 
                 Context("when there is an error", func() {})

@@ -5,6 +5,8 @@ FROM golang
 RUN go get github.com/onsi/ginkgo/ginkgo
 RUN go get github.com/onsi/gomega
 
+RUN go get github.com/c9s/goprocinfo/linux
+
 # The resulting contianer image associated with this Dockerfile can be
 # used to create cross-compiled runnables for the Raspberry Pi.
 

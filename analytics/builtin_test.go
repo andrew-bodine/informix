@@ -4,6 +4,8 @@ import (
     "net/http"
     "time"
 
+    linuxproc "github.com/c9s/goprocinfo/linux"
+
     . "github.com/onsi/ginkgo"
     . "github.com/onsi/gomega"
 
@@ -52,8 +54,8 @@ var _ = Describe("analytics", func() {
                     Expect(len(data)).NotTo(Equal(0))
 
                     // Assert something about the data.
-                    d := data[0].(map[string]int)
-                    Expect(d["MemAvailable"]).NotTo(Equal(0))
+                    d := data[0].(*linuxproc.MemInfo)
+                    Expect(d.MemAvailable).NotTo(Equal(0))
                 })
             })
         })
@@ -91,7 +93,7 @@ var _ = Describe("analytics", func() {
                     b.CacheHandler(w, r)
 
                     Expect(w.Buf).NotTo(Equal(""))
-                    Expect(w.Buf).To(ContainSubstring("MemAvailable"))
+                    Expect(w.Buf).To(ContainSubstring("mem_available"))
                 })
             })
         })
