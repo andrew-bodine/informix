@@ -1,2 +1,5 @@
 # Environment specific configs.
 *.env
+
+# Cross-compile targets.
+informix
