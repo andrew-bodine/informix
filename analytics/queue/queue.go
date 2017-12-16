@@ -66,14 +66,12 @@ func (q *queue) Copy() []interface{} {
 
 // Implement the Queuer interface.
 func (q *queue) Push(data interface{}) {
-	q.Lock()
-	defer q.Unlock()
-
 	i := &item{
 		data: data,
 		next: nil,
 	}
 
+	q.Lock()
 	switch q.count {
 	case 0:
 		q.tail = i
@@ -91,10 +89,10 @@ func (q *queue) Push(data interface{}) {
 		q.count++
 		break
 	}
-
+	q.Unlock()
 
 	if q.pushHandler != nil {
-		go q.pushHandler.AfterPush(data)
+		go q.pushHandler.AfterPush(q.Copy())
 	}
 }
 

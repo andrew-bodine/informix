@@ -1,5 +1,8 @@
 # Environment specific configs.
 *.env
 
+# Golang test coverage.
+*.coverprofile
+
 # Cross-compile targets.
 informix

@@ -6,6 +6,6 @@ type testPushHandler struct {
 }
 
 // Implement the queue.PushHandler interface.
-func (t *testPushHandler) AfterPush(obj interface{}) {
-    t.delegate <- obj
+func (t *testPushHandler) AfterPush(objs []interface{}) {
+    t.delegate <- objs[0]
 }
