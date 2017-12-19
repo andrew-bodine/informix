@@ -21,7 +21,7 @@ func MQTTServerIsUp(broker string) bool {
 }
 
 const (
-    TestBroker= "tcp://localhost:1883"
+    TestBroker= "tcp://184.172.250.124:31214"
 )
 
 var _ = Describe("wiot", func() {
@@ -108,7 +108,7 @@ var _ = Describe("wiot", func() {
                         c.Connect()
                         err := c.Publish("test",
                             map[string]interface{}{
-                                "": "foobar",
+                                "": func() {},
                             },
                         )
                         Expect(err).NotTo(BeNil())

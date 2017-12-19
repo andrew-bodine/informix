@@ -11,15 +11,15 @@ import (
 // NOTE: Watson IoT Platform documentation for MQTT clients and gateways here:
 // https://console.ng.bluemix.net/docs/services/IoT/gateways/mqtt.html#mqtt
 
-func NewClient(o *Options) *client {
+func NewClient(o *Options) *Client {
     if o == nil {
         return nil
     }
 
-    return &client{opts:  o}
+    return &Client{opts:  o}
 }
 
-type client struct {
+type Client struct {
     opts    *Options
 
     cli     MQTT.Client
@@ -28,7 +28,7 @@ type client struct {
 }
 
 // Exposes the underlying MQTT client.
-func (c *client) MQTTClient() MQTT.Client {
+func (c *Client) MQTTClient() MQTT.Client {
     c.Lock()
     defer c.Unlock()
 
@@ -37,7 +37,7 @@ func (c *client) MQTTClient() MQTT.Client {
 
 // Connect creates a new MQTT client and tries to connect to the remote
 // MQTT server.
-func (c *client) Connect() error {
+func (c *Client) Connect() error {
     c.Lock()
     defer c.Unlock()
 
@@ -62,7 +62,7 @@ func (c *client) Connect() error {
 
 // Publish extracts configuration params from environment variables, and
 // publishes the message payload to the appropriate MQTT topic.
-func (c *client) Publish(t string, payload map[string]interface{}) error {
+func (c *Client) Publish(t string, payload map[string]interface{}) error {
     c.Lock()
     if c.cli == nil {
         return MQTT.ErrNotConnected
