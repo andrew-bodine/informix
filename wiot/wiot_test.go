@@ -125,8 +125,28 @@ var _ = Describe("wiot", func() {
                     c := NewClient(opts)
                     c.Connect()
 
+                    topic := "iot-2/type/test/id/test/evt/test/fmt/json"
+
+                    // Get a reference to the underlying MQTT client so we
+                    // can listen for the expected message.
+                    mqttCli := c.MQTTClient()
+
+                    // Hookup handler for test message.
+                    done := make(chan mqtt.Message, 1)
+
+                    handler := func(client mqtt.Client, msg mqtt.Message) {
+                        done <- msg
+                    }
+
+                    token := mqttCli.Subscribe(topic, 0, handler)
+                    token.Wait()
+                    Expect(token.Error()).To(BeNil())
+
                     err := c.Publish("test", payload)
                     Expect(err).To(BeNil())
+
+                    msg := <- done
+                    Expect(msg).NotTo(BeNil())
                 })
             })
         })

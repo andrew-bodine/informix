@@ -27,6 +27,14 @@ type client struct {
     sync.Mutex
 }
 
+// Exposes the underlying MQTT client.
+func (c *client) MQTTClient() MQTT.Client {
+    c.Lock()
+    defer c.Unlock()
+
+    return c.cli
+}
+
 // Connect creates a new MQTT client and tries to connect to the remote
 // MQTT server.
 func (c *client) Connect() error {
