@@ -6,12 +6,14 @@ import (
     "sync"
 
     MQTT "github.com/eclipse/paho.mqtt.golang"
+
+    "github.com/andrew-bodine/informix/downstream"
 )
 
 // NOTE: Watson IoT Platform documentation for MQTT clients and gateways here:
 // https://console.ng.bluemix.net/docs/services/IoT/gateways/mqtt.html#mqtt
 
-func NewClient(o *Options) *Client {
+func NewClient(o *Options) downstream.Downstreamer {
     if o == nil {
         return nil
     }
@@ -19,6 +21,7 @@ func NewClient(o *Options) *Client {
     return &Client{opts:  o}
 }
 
+// A downstream.Downstreamer implementation.
 type Client struct {
     opts    *Options
 
@@ -35,8 +38,7 @@ func (c *Client) MQTTClient() MQTT.Client {
     return c.cli
 }
 
-// Connect creates a new MQTT client and tries to connect to the remote
-// MQTT server.
+// Implement the downstream.Downstreamer interface.
 func (c *Client) Connect() error {
     c.Lock()
     defer c.Unlock()
@@ -50,8 +52,10 @@ func (c *Client) Connect() error {
 
     o.SetAutoReconnect(false)
 
+    // Create a new MQTT client.
     cli := MQTT.NewClient(o)
 
+    // Try to connect to the remote MQTT server.
     if t := cli.Connect(); t.Wait() && t.Error() != nil {
         return t.Error()
     }
@@ -60,8 +64,7 @@ func (c *Client) Connect() error {
     return nil
 }
 
-// Publish extracts configuration params from environment variables, and
-// publishes the message payload to the appropriate MQTT topic.
+// Implement the downstream.Downstreamer interface.
 func (c *Client) Publish(t string, payload map[string]interface{}) error {
     c.Lock()
     if c.cli == nil {
@@ -81,6 +84,7 @@ func (c *Client) Publish(t string, payload map[string]interface{}) error {
         t,
     )
 
+    // Publish the message payload to the specified topic.
     if t := c.cli.Publish(topic, 0, false, data); t.Wait() && t.Error() != nil {
         return t.Error()
     }

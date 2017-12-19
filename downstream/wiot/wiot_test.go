@@ -6,7 +6,8 @@ import (
 
     mqtt "github.com/eclipse/paho.mqtt.golang"
 
-    . "github.com/andrew-bodine/informix/wiot"
+    "github.com/andrew-bodine/informix/downstream"
+    . "github.com/andrew-bodine/informix/downstream/wiot"
 )
 
 func MQTTServerIsUp(broker string) bool {
@@ -25,11 +26,13 @@ const (
 )
 
 var _ = Describe("wiot", func() {
+    var ds downstream.Downstreamer
+
     Context("NewClient()", func() {
         Context("with invalid options", func() {
             It("return nil", func() {
-                c := NewClient(nil)
-                Expect(c).To(BeNil())
+                ds = NewClient(nil)
+                Expect(ds).To(BeNil())
             })
         })
 
@@ -37,8 +40,8 @@ var _ = Describe("wiot", func() {
             It("returns a client", func() {
                 o := NewOptions("test", "test", "test", "test")
 
-                c := NewClient(o)
-                Expect(c).NotTo(BeNil())
+                ds = NewClient(o)
+                Expect(ds).NotTo(BeNil())
             })
         })
     })
@@ -48,16 +51,16 @@ var _ = Describe("wiot", func() {
 
         BeforeEach(func() {
             opts = NewOptions("test", "test", "test", "test")
+            ds = NewClient(opts)
         })
 
         Context("Connect()", func() {
             Context("when there is an error", func() {
                 It("returns the error", func() {
-                    c := NewClient(opts)
 
                     // This should error because there isn't an MQTT server
                     // listening at the configured broker address.
-                    err := c.Connect()
+                    err := ds.Connect()
                     Expect(err).NotTo(BeNil())
                 })
             })
@@ -70,8 +73,8 @@ var _ = Describe("wiot", func() {
                     }
                     opts.Broker = TestBroker
 
-                    c := NewClient(opts)
-                    err := c.Connect()
+                    ds = NewClient(opts)
+                    err := ds.Connect()
                     Expect(err).To(BeNil())
                 })
             })
@@ -88,9 +91,7 @@ var _ = Describe("wiot", func() {
 
             Context("before it is connected", func() {
                 It("returns an error", func() {
-                    c := NewClient(opts)
-
-                    err := c.Publish("test", payload)
+                    err := ds.Publish("test", payload)
                     Expect(err).NotTo(BeNil())
                 })
             })
@@ -104,9 +105,9 @@ var _ = Describe("wiot", func() {
                         }
                         opts.Broker = TestBroker
 
-                        c := NewClient(opts)
-                        c.Connect()
-                        err := c.Publish("test",
+                        ds = NewClient(opts)
+                        ds.Connect()
+                        err := ds.Publish("test",
                             map[string]interface{}{
                                 "": func() {},
                             },
@@ -122,13 +123,14 @@ var _ = Describe("wiot", func() {
                     }
                     opts.Broker = TestBroker
 
-                    c := NewClient(opts)
-                    c.Connect()
+                    ds = NewClient(opts)
+                    ds.Connect()
 
                     topic := "iot-2/type/test/id/test/evt/test/fmt/json"
 
                     // Get a reference to the underlying MQTT client so we
                     // can listen for the expected message.
+                    c := ds.(*Client)
                     mqttCli := c.MQTTClient()
 
                     // Hookup handler for test message.
@@ -142,7 +144,7 @@ var _ = Describe("wiot", func() {
                     token.Wait()
                     Expect(token.Error()).To(BeNil())
 
-                    err := c.Publish("test", payload)
+                    err := ds.Publish("test", payload)
                     Expect(err).To(BeNil())
 
                     msg := <- done

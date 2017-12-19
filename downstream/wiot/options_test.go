@@ -4,7 +4,7 @@ import (
     . "github.com/onsi/ginkgo"
     . "github.com/onsi/gomega"
 
-    . "github.com/andrew-bodine/informix/wiot"
+    . "github.com/andrew-bodine/informix/downstream/wiot"
 )
 
 var _ = Describe("wiot", func() {
