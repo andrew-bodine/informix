@@ -45,12 +45,12 @@ var _ = Describe("analytics", func() {
                     Expect(len(data)).To(Equal(0))
                 })
 
-                It("returns the current value for a valid key", func() {
-                    timer := time.NewTimer(time.Millisecond * 10)
-                    <- timer.C
+                It("eventually returns the current value for a key", func() {
+                    var data []interface{}
 
-                    data := b.Cache(emit.MEMORY)
-                    Expect(data).NotTo(BeNil())
+                    for len(data) == 0 {
+                        data = b.Cache(emit.MEMORY)
+                    }
                     Expect(len(data)).NotTo(Equal(0))
 
                     // Assert something about the data.
@@ -83,6 +83,9 @@ var _ = Describe("analytics", func() {
                 })
 
                 It("returns values for all keys", func() {
+
+                    // TODO: Fix this, timers are ugly and racy, just wait for
+                    // the cache to fill up before doing http request.
                     timer := time.NewTimer(time.Millisecond * 10)
                     <- timer.C
 

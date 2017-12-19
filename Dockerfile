@@ -1,13 +1,14 @@
 FROM golang
 
 # Fetch common go package dependencies.
-# RUN go get github.com/eclipse/paho.mqtt.golang
 RUN go get github.com/onsi/ginkgo/ginkgo
 RUN go get github.com/onsi/gomega
 
+# RUN go get github.com/andrew-bodine/circuitbreaker
 RUN go get github.com/c9s/goprocinfo/linux
+RUN go get github.com/eclipse/paho.mqtt.golang
 
-# The resulting contianer image associated with this Dockerfile can be
+# NOTE: The resulting container image associated with this Dockerfile can be
 # used to create cross-compiled runnables for the Raspberry Pi.
 
 WORKDIR /go/src/github.com/andrew-bodine/informix
