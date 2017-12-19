@@ -83,11 +83,11 @@ var _ = Describe("analytics", func() {
                 })
 
                 It("returns values for all keys", func() {
+                    var data []interface{}
 
-                    // TODO: Fix this, timers are ugly and racy, just wait for
-                    // the cache to fill up before doing http request.
-                    timer := time.NewTimer(time.Millisecond * 10)
-                    <- timer.C
+                    for len(data) == 0 {
+                        data = b.Cache(emit.MEMORY)
+                    }
 
                     r, err := http.NewRequest("GET", "/analytics/builtin", nil)
                     Expect(err).To(BeNil())
