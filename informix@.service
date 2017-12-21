@@ -4,7 +4,7 @@ Description=Informix
 [Service]
 Restart=always
 RestartSec=30
-#EnvironmentFile=/env.sh
+EnvironmentFile=/etc/systemd/informix.env
 
 # In case host crashed, any cleanup?
 # ExecStartPre=-
