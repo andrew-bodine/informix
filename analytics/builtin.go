@@ -7,7 +7,9 @@ import (
     "time"
 
     "github.com/andrew-bodine/informix/analytics/emit"
+    "github.com/andrew-bodine/informix/analytics/policy"
     "github.com/andrew-bodine/informix/analytics/queue"
+    "github.com/andrew-bodine/informix/downstream"
 )
 
 type Builtin interface {
@@ -20,7 +22,7 @@ type Builtin interface {
     Stop()
 }
 
-func NewBuiltin() Builtin {
+func NewBuiltin(ds downstream.Downstreamer) Builtin {
     b := &builtin{
         timer:      make(chan *time.Timer, 1),
         stop:       make(chan bool, 1),
@@ -34,6 +36,7 @@ func NewBuiltin() Builtin {
     // Setup builtin analytic directives.
     b.generators[emit.MEMORY] = emit.Memory()
     b.queuers[emit.MEMORY] = queue.NewQueue(3)
+    b.queuers[emit.MEMORY].OnPush(&policy.Memory{Downstream: ds})
     b.generators[emit.PROCESSOR] = emit.Processor()
     b.queuers[emit.PROCESSOR] = queue.NewQueue(3)
 
@@ -50,6 +53,7 @@ type builtin struct {
     queuers     map[string]queue.Queuer
 }
 
+// Implement the Builtin interface.
 func (b *builtin) Cache(key string) []interface{} {
     q, exists := b.queuers[key]
 
@@ -60,6 +64,7 @@ func (b *builtin) Cache(key string) []interface{} {
     return q.Copy()
 }
 
+// Implement the Builtin interface.
 func (b *builtin) CacheHandler(w http.ResponseWriter, r *http.Request) {
     cache := make(map[string]interface{})
 

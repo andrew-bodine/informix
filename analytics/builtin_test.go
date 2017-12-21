@@ -18,7 +18,7 @@ var _ = Describe("analytics", func() {
         var b analytics.Builtin
 
         BeforeEach(func() {
-            b = analytics.NewBuiltin()
+            b = analytics.NewBuiltin(nil)
         })
 
         Context("Cache()", func() {

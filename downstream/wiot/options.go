@@ -2,6 +2,7 @@ package wiot
 
 import (
     "fmt"
+    "os"
     "strings"
 )
 
@@ -33,6 +34,24 @@ func anyEmpty(args ...string) bool {
     }
 
     return false
+}
+
+const (
+    Org = "WIOT_ORG"
+    DeviceType = "WIOT_DEVICE_TYPE"
+    DeviceId = "WIOT_DEVICE_ID"
+    Token = "WIOT_TOKEN"
+)
+
+// NewOptionsFromEnv returns options that correspond to the environment
+// variables available to this package.
+func NewOptionsFromEnv() *Options {
+    org := os.Getenv(Org)
+    typ := os.Getenv(DeviceType)
+    id := os.Getenv(DeviceId)
+    tok := os.Getenv(Token)
+
+    return NewOptions(org, typ, id, tok)
 }
 
 // Options for creating a new Watson IoT Platform MQTT client.

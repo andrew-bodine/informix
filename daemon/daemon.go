@@ -9,6 +9,8 @@ import (
     "time"
 
     "github.com/andrew-bodine/informix/analytics"
+    "github.com/andrew-bodine/informix/downstream"
+    "github.com/andrew-bodine/informix/downstream/wiot"
 )
 
 func Daemon(args []string) {
@@ -26,12 +28,27 @@ func Daemon(args []string) {
         syscall.SIGQUIT,
     )
 
+    // Downstream target for data or events generated from informix.
+    var dStreamer downstream.Downstreamer = nil
+
+    // Create a wiot client to pass into builtin analytics.
+    if opts := wiot.NewOptionsFromEnv(); opts != nil {
+        ds := wiot.NewClient(opts)
+
+        fmt.Println("Informix downstreaming to ", opts.Broker)
+        if err := ds.Connect(); err == nil {
+            dStreamer = ds
+        }
+    }
+
     // Start builtin analytics and monitoring routine.
-    builtin := analytics.NewBuiltin()
+    builtin := analytics.NewBuiltin(dStreamer)
     builtin.Run(time.Second * 3)
 
     http.HandleFunc("/analytics/builtin", builtin.CacheHandler)
     http.ListenAndServe(":80", nil)
+
+    // TODO: Serve registration protocol on /var/run/informix.sock
 
     // Wait for a signal.
     <- signals

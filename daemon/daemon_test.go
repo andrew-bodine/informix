@@ -2,12 +2,15 @@ package daemon_test
 
 import (
     "bufio"
+    "fmt"
     "io"
     "os"
     "os/exec"
 
     . "github.com/onsi/ginkgo"
     . "github.com/onsi/gomega"
+
+    "github.com/andrew-bodine/informix/downstream/wiot"
 )
 
 var _ = Describe("daemon", func() {
@@ -27,6 +30,42 @@ var _ = Describe("daemon", func() {
 
             AfterEach(func() {
                 daemonCmd.Wait()
+            })
+
+            Context("with Watson IoT Platform environment variables", func() {
+                BeforeEach(func() {
+                    daemonCmd.Process.Kill()
+                    daemonCmd.Wait()
+
+                    daemonCmd = exec.Command("informix")
+
+                    out, _ = daemonCmd.StdoutPipe()
+
+                    testConf := map[string]string{
+                        wiot.Org: "testorg",
+                        wiot.DeviceType: "testtype",
+                        wiot.DeviceId: "testid",
+                        wiot.Token: "testtoken",
+                    }
+
+                    for k, v := range testConf {
+                        daemonCmd.Env = append(daemonCmd.Env,
+                            fmt.Sprintf("%s=%s", k, v),
+                        )
+                    }
+
+                    daemonCmd.Start()
+                })
+
+                It("outputs that it is downstreaming", func() {
+                    reader := bufio.NewReader(out)
+                    reader.ReadString('\n')
+                    second, err := reader.ReadString('\n')
+                    Expect(err).To(BeNil())
+                    Expect(second).To(ContainSubstring("downstreaming"))
+
+                    daemonCmd.Process.Kill()
+                })
             })
 
             It("outputs that it has started", func() {

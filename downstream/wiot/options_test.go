@@ -1,6 +1,8 @@
 package wiot_test
 
 import (
+    "os"
+
     . "github.com/onsi/ginkgo"
     . "github.com/onsi/gomega"
 
@@ -41,6 +43,51 @@ var _ = Describe("wiot", func() {
             It("sets password correctly", func() {
                 Expect(o.Password).To(Equal("test"))
             })
+        })
+    })
+
+    Context("NewOptionsFromEnv()", func() {
+        var o *Options
+        var backup map[string]string
+
+        BeforeEach(func() {
+            backup = make(map[string]string)
+
+            if o := os.Getenv(Org); o != "" {
+                backup[Org] = o
+            }
+            os.Setenv(Org, "envtest")
+
+            if dt := os.Getenv(DeviceType); dt != "" {
+                backup[DeviceType] = dt
+            }
+            os.Setenv(DeviceType, "envtest")
+
+            if di := os.Getenv(DeviceId); di != "" {
+                backup[DeviceId] = di
+            }
+            os.Setenv(DeviceId, "envtest")
+
+            if t := os.Getenv(Token); t != "" {
+                backup[Token] = t
+            }
+            os.Setenv(Token, "envtest")
+        })
+
+        AfterEach(func() {
+            for k, v := range backup {
+                os.Setenv(k, v)
+            }
+        })
+
+        It("returns corresponding options", func() {
+            o = NewOptionsFromEnv()
+            Expect(o).NotTo(BeNil())
+            b := "tcp://envtest.messaging.internetofthings.ibmcloud.com:1883"
+            Expect(o.Broker).To(Equal(b))
+            Expect(o.ClientId).To(Equal("g:envtest:envtest:envtest"))
+            Expect(o.Username).To(Equal("use-token-auth"))
+            Expect(o.Password).To(Equal("envtest"))
         })
     })
 
