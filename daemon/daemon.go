@@ -35,7 +35,7 @@ func Daemon(args []string) {
     if opts := wiot.NewOptionsFromEnv(); opts != nil {
         ds := wiot.NewClient(opts)
 
-        fmt.Println("Informix downstreaming to ", opts.Broker)
+        fmt.Println("Informix downstreaming to", opts.Broker)
         if err := ds.Connect(); err == nil {
             dStreamer = ds
         }
